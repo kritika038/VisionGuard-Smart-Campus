@@ -28,7 +28,7 @@ function Login() {
       } else {
         window.location.href = "/student";
       }
-    } catch {
+    } catch (err) {
       setError("Invalid Email or Password");
     } finally {
       setLoading(false);
@@ -75,12 +75,28 @@ function Login() {
 
           {error && <div className="error-box">{error}</div>}
 
-          <button type="submit">{loading ? "Please Wait..." : "Login"}</button>
+          <button type="submit">
+            {loading ? "Please Wait..." : "Login"}
+          </button>
 
           <div className="demo-box">
             <h4>Demo Users</h4>
-            <p>Admin: admin@visionguard.com</p>
+
+            <p><strong>Admin Portal</strong></p>
+            <p>Email: admin@visionguard.com</p>
             <p>Password: admin123</p>
+
+            <br />
+
+            <p><strong>Teacher Portal</strong></p>
+            <p>Email: teacher@visionguard.com</p>
+            <p>Password: 123456</p>
+
+            <br />
+
+            <p><strong>Student Portal</strong></p>
+            <p>Email: student@visionguard.com</p>
+            <p>Password: 123456</p>
           </div>
         </form>
       </div>
