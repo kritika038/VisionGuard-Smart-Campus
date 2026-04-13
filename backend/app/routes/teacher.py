@@ -1,5 +1,3 @@
-# backend/app/routes/teacher.py
-
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 from app.core.db import engine
@@ -13,48 +11,36 @@ def get_teachers():
         rows = conn.execute(
             text("SELECT * FROM teachers ORDER BY id DESC")
         ).mappings().all()
-
     return rows
 
 
 @router.post("/add")
 def add_teacher(data: dict):
-    with engine.connect() as conn:
-        conn.execute(text("""
-        INSERT INTO teachers
-        (
-          name,
-          employee_id,
-          department,
-          email,
-          mobile,
-          qualification,
-          password
-        )
-        VALUES
-        (
-          :name,
-          :employee_id,
-          :department,
-          :email,
-          :mobile,
-          :qualification,
-          :password
-        )
-        """), data)
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("""
+                INSERT INTO teachers
+                (name,email,subject)
+                VALUES
+                (:name,:email,:department)
+            """), {
+                "name": data.get("name"),
+                "email": data.get("email"),
+                "department": data.get("department")
+            })
+            conn.commit()
 
-        conn.commit()
+        return {"success": True}
 
-    return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/{teacher_id}")
 def delete_teacher(teacher_id: int):
     with engine.connect() as conn:
         conn.execute(
-            text(
-              "DELETE FROM teachers WHERE id=:id"
-            ),
+            text("DELETE FROM teachers WHERE id=:id"),
             {"id": teacher_id}
         )
         conn.commit()
