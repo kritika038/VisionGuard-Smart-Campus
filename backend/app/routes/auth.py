@@ -16,20 +16,22 @@ class LoginData(BaseModel):
 
 @router.post("/login")
 def login(data: LoginData):
+    email = data.email.strip().lower()
+    password = data.password.strip()
+
+    # Admin login works even if database is down
+    if email == "admin@visionguard.com" and password == "admin123":
+        return {
+            "success": True,
+            "role": "admin",
+            "name": "Administrator",
+        }
+
     db = get_mysql_connection()
     cur = db.cursor(dictionary=True)
 
     try:
-        email = data.email.strip().lower()
-        password = data.password.strip()
-
-        if email == "admin@visionguard.com" and password == "admin123":
-            return {
-                "success": True,
-                "role": "admin",
-                "name": "Administrator",
-            }
-
+        # Teacher Login
         cur.execute(
             """
             SELECT * FROM teachers
@@ -47,6 +49,7 @@ def login(data: LoginData):
                 "id": teacher["id"],
             }
 
+        # Student Login
         cur.execute(
             """
             SELECT * FROM students
@@ -65,6 +68,7 @@ def login(data: LoginData):
             }
 
         raise HTTPException(status_code=401, detail="Invalid Email or Password")
+
     finally:
         cur.close()
         db.close()
