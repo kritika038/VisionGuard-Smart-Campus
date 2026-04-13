@@ -1,0 +1,91 @@
+import React, { useState } from "react";
+import api from "../api";
+import "../App.css";
+
+function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const login = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await api.post("/auth/login", {
+        email,
+        password,
+      });
+
+      localStorage.setItem("user", JSON.stringify(res.data));
+
+      if (res.data.role === "admin") {
+        window.location.href = "/admin";
+      } else if (res.data.role === "teacher") {
+        window.location.href = "/teacher";
+      } else {
+        window.location.href = "/student";
+      }
+    } catch {
+      setError("Invalid Email or Password");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="login-page">
+      <div className="login-left">
+        <div className="login-brand">
+          <h1>VisionGuard</h1>
+          <span>AI Attendance Management</span>
+        </div>
+
+        <div className="login-features">
+          <div className="feature-box">Smart QR Attendance</div>
+          <div className="feature-box">Face Recognition</div>
+          <div className="feature-box">Teacher Dashboard</div>
+          <div className="feature-box">Student Analytics</div>
+          <div className="feature-box">Admin Reports</div>
+        </div>
+      </div>
+
+      <div className="login-right">
+        <form className="login-card" onSubmit={login}>
+          <h2>Welcome Back</h2>
+          <p>Login to continue</p>
+
+          <input
+            type="email"
+            placeholder="Email Address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+
+          {error && <div className="error-box">{error}</div>}
+
+          <button type="submit">{loading ? "Please Wait..." : "Login"}</button>
+
+          <div className="demo-box">
+            <h4>Demo Users</h4>
+            <p>Admin: admin@visionguard.com</p>
+            <p>Password: admin123</p>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default Login;

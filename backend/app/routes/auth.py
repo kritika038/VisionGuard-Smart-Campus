@@ -1,100 +1,70 @@
-# backend/app/routes/auth.py
-
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-import mysql.connector
+from pydantic import BaseModel, EmailStr, Field
+
+from app.core.db import get_mysql_connection
 
 router = APIRouter(
     prefix="/auth",
-    tags=["Auth"]
+    tags=["Auth"],
 )
 
-# -------------------------
-# MYSQL CONNECTION
-# -------------------------
-def get_db():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="visionguard_ai"
-    )
 
-# -------------------------
-# REQUEST MODEL
-# -------------------------
 class LoginData(BaseModel):
-    email: str
-    password: str
+    email: EmailStr
+    password: str = Field(..., min_length=1, max_length=128)
 
-# -------------------------
-# REAL LOGIN
-# -------------------------
+
 @router.post("/login")
 def login(data: LoginData):
-
-    db = get_db()
+    db = get_mysql_connection()
     cur = db.cursor(dictionary=True)
 
-    # ---------- ADMIN ----------
-    if (
-        data.email == "admin@visionguard.com"
-        and data.password == "admin123"
-    ):
-        return {
-            "success": True,
-            "role": "admin",
-            "name": "Administrator"
-        }
+    try:
+        email = data.email.strip().lower()
+        password = data.password.strip()
 
-    # ---------- TEACHER ----------
-    cur.execute(
-        """
-        SELECT * FROM teachers
-        WHERE email=%s AND password=%s
-        """,
-        (
-            data.email,
-            data.password
+        if email == "admin@visionguard.com" and password == "admin123":
+            return {
+                "success": True,
+                "role": "admin",
+                "name": "Administrator",
+            }
+
+        cur.execute(
+            """
+            SELECT * FROM teachers
+            WHERE LOWER(email)=%s AND password=%s
+            """,
+            (email, password),
         )
-    )
+        teacher = cur.fetchone()
 
-    teacher = cur.fetchone()
+        if teacher:
+            return {
+                "success": True,
+                "role": "teacher",
+                "name": teacher["name"],
+                "id": teacher["id"],
+            }
 
-    if teacher:
-        return {
-            "success": True,
-            "role": "teacher",
-            "name": teacher["name"],
-            "id": teacher["id"]
-        }
-
-    # ---------- STUDENT ----------
-    cur.execute(
-        """
-        SELECT * FROM students
-        WHERE email=%s AND password=%s
-        """,
-        (
-            data.email,
-            data.password
+        cur.execute(
+            """
+            SELECT * FROM students
+            WHERE LOWER(email)=%s AND password=%s
+            """,
+            (email, password),
         )
-    )
+        student = cur.fetchone()
 
-    student = cur.fetchone()
+        if student:
+            return {
+                "success": True,
+                "role": "student",
+                "name": f'{student["first_name"]} {student["last_name"]}'.strip(),
+                "id": student["id"],
+            }
 
-    if student:
-        return {
-            "success": True,
-            "role": "student",
-            "name":
-                student["first_name"]
-                + " "
-                + student["last_name"],
-            "id": student["id"]
-        }
-
-    raise HTTPException(
-        status_code=401,
-        detail="Invalid Email or Password"
-    )
+        raise HTTPException(status_code=401, detail="Invalid Email or Password")
+    finally:
+        cur.close()
+        db.close()

@@ -1,119 +1,69 @@
-# backend/app/routes/face_attendance.py
-
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-import mysql.connector
+from datetime import date
+from io import BytesIO
 import base64
+
 import face_recognition
 import numpy as np
-from io import BytesIO
+from fastapi import APIRouter, HTTPException
 from PIL import Image
-from datetime import date
+from pydantic import BaseModel, Field
+
+from app.core.db import get_mysql_connection
 
 router = APIRouter(
     prefix="/face-attendance",
-    tags=["AI Attendance"]
+    tags=["AI Attendance"],
 )
 
-# -----------------------------------
-# MYSQL
-# -----------------------------------
-def get_db():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="",
-        database="visionguard_ai"
-    )
 
-# -----------------------------------
-# REQUEST MODEL
-# -----------------------------------
 class FaceRequest(BaseModel):
-    photo_base64: str
-    subject_name: str = "General"
+    photo_base64: str = Field(..., min_length=1)
+    subject_name: str = Field(default="General", min_length=1, max_length=150)
 
-# -----------------------------------
-# IMAGE HELPERS
-# -----------------------------------
-def base64_to_np(base64_string):
+
+def base64_to_np(base64_string: str):
     if "," in base64_string:
-        base64_string = base64_string.split(",")[1]
+        base64_string = base64_string.split(",", 1)[1]
 
-    image_data = base64.b64decode(
-        base64_string
-    )
-
-    image = Image.open(
-        BytesIO(image_data)
-    ).convert("RGB")
-
+    image_data = base64.b64decode(base64_string)
+    image = Image.open(BytesIO(image_data)).convert("RGB")
     return np.array(image)
 
-# -----------------------------------
-# MAIN ROUTE
-# -----------------------------------
+
 @router.post("/scan")
 def scan_face(data: FaceRequest):
-
-    db = get_db()
+    db = get_mysql_connection()
     cur = db.cursor(dictionary=True)
 
-    # Incoming webcam image
-    unknown_img = base64_to_np(
-        data.photo_base64
-    )
+    try:
+        unknown_img = base64_to_np(data.photo_base64)
+        unknown_encodings = face_recognition.face_encodings(unknown_img)
 
-    unknown_encodings = (
-        face_recognition.face_encodings(
-            unknown_img
-        )
-    )
+        if not unknown_encodings:
+            raise HTTPException(status_code=400, detail="No face detected")
 
-    if len(unknown_encodings) == 0:
-        raise HTTPException(
-            status_code=400,
-            detail="No face detected"
-        )
+        unknown_face = unknown_encodings[0]
 
-    unknown_face = unknown_encodings[0]
+        cur.execute("SELECT * FROM students WHERE photo_path IS NOT NULL")
+        students = cur.fetchall()
 
-    # Load students
-    cur.execute(
-        "SELECT * FROM students WHERE photo_path IS NOT NULL"
-    )
+        for student in students:
+            try:
+                known_img = face_recognition.load_image_file(student["photo_path"])
+                known_encodings = face_recognition.face_encodings(known_img)
 
-    students = cur.fetchall()
+                if not known_encodings:
+                    continue
 
-    for student in students:
-
-        try:
-            known_img = face_recognition.load_image_file(
-                student["photo_path"]
-            )
-
-            known_encodings = (
-                face_recognition.face_encodings(
-                    known_img
-                )
-            )
-
-            if len(known_encodings) == 0:
-                continue
-
-            known_face = known_encodings[0]
-
-            match = (
-                face_recognition.compare_faces(
-                    [known_face],
+                match = face_recognition.compare_faces(
+                    [known_encodings[0]],
                     unknown_face,
-                    tolerance=0.48
+                    tolerance=0.48,
                 )
-            )
 
-            if match[0]:
+                if not match[0]:
+                    continue
 
-                # duplicate today check
                 cur.execute(
                     """
                     SELECT * FROM attendance_logs
@@ -121,27 +71,17 @@ def scan_face(data: FaceRequest):
                     AND date_marked=%s
                     AND subject_name=%s
                     """,
-                    (
-                        student["id"],
-                        date.today(),
-                        data.subject_name
-                    )
+                    (student["id"], date.today(), data.subject_name),
                 )
-
                 already = cur.fetchone()
 
                 if already:
                     return {
                         "success": True,
-                        "message":
-                        "Already Marked",
-                        "student":
-                        student["first_name"]
-                        + " "
-                        + student["last_name"]
+                        "message": "Already Marked",
+                        "student": f'{student["first_name"]} {student["last_name"]}'.strip(),
                     }
 
-                # insert attendance
                 cur.execute(
                     """
                     INSERT INTO attendance_logs
@@ -157,31 +97,23 @@ def scan_face(data: FaceRequest):
                     """,
                     (
                         student["id"],
-                        student["first_name"]
-                        + " "
-                        + student["last_name"],
+                        f'{student["first_name"]} {student["last_name"]}'.strip(),
                         data.subject_name,
                         "Present",
-                        date.today()
-                    )
+                        date.today(),
+                    ),
                 )
-
                 db.commit()
 
                 return {
                     "success": True,
-                    "message":
-                    "Attendance Marked",
-                    "student":
-                    student["first_name"]
-                    + " "
-                    + student["last_name"]
+                    "message": "Attendance Marked",
+                    "student": f'{student["first_name"]} {student["last_name"]}'.strip(),
                 }
+            except Exception:
+                continue
 
-        except:
-            continue
-
-    raise HTTPException(
-        status_code=404,
-        detail="Face not recognized"
-    )
+        raise HTTPException(status_code=404, detail="Face not recognized")
+    finally:
+        cur.close()
+        db.close()
