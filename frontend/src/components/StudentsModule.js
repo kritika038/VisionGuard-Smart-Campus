@@ -56,42 +56,24 @@ function StudentsModule() {
   };
 
   const addStudent = async () => {
-    if (!form.first_name.trim()) {
-      alert("First name required");
-      return;
-    }
+  try {
+    const payload = {
+      name: form.first_name + " " + form.last_name,
+      email: form.email,
+      roll_number: form.enrollment_no,
+      class: form.section || "CSE"
+    };
 
-    if (!form.enrollment_no.trim()) {
-      alert("Enrollment required");
-      return;
-    }
+    await api.post("/students/add", payload);
 
-    if (!form.email.trim()) {
-      alert("Email required");
-      return;
-    }
+    alert("Student Added Successfully");
 
-    try {
-      const res = await api.post(
-        "/students/create-only",
-        form
-      );
+    loadStudents();
 
-      setSelectedId(res.data.id);
-
-      alert(
-        "Student added. Face registration mandatory."
-      );
-
-      loadStudents();
-
-    } catch (error) {
-      alert(
-        error.response?.data?.detail ||
-        "Failed"
-      );
-    }
-  };
+  } catch (error) {
+    alert(error.response?.data?.detail || "Failed");
+  }
+};
 
   const captureFace = () => {
     const img =

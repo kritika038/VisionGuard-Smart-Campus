@@ -9,22 +9,15 @@ function TeachersModule() {
 
   const [form, setForm] = useState({
     name: "",
-    employee_id: "",
-    department: "",
     email: "",
-    mobile: "",
-    qualification: "",
-    password: ""
+    department: ""
   });
 
+  // Load Teachers
   const loadTeachers = async () => {
     try {
-      const res = await api.get(
-        "/teachers/"
-      );
-
+      const res = await api.get("/teachers/");
       setTeachers(res.data);
-
     } catch (error) {
       console.log(error);
     }
@@ -34,6 +27,7 @@ function TeachersModule() {
     loadTeachers();
   }, []);
 
+  // Handle Input Change
   const change = (key, value) => {
     setForm({
       ...form,
@@ -41,14 +35,10 @@ function TeachersModule() {
     });
   };
 
+  // Add Teacher
   const addTeacher = async () => {
     if (!form.name.trim()) {
       alert("Teacher name required");
-      return;
-    }
-
-    if (!form.employee_id.trim()) {
-      alert("Employee ID required");
       return;
     }
 
@@ -58,48 +48,42 @@ function TeachersModule() {
     }
 
     try {
-      await api.post(
-        "/teachers/add",
-        form
-      );
+      await api.post("/teachers/add", {
+        name: form.name,
+        email: form.email,
+        subject: form.department || "General"
+      });
 
-      alert("Teacher Added");
+      alert("Teacher Added Successfully");
 
       setForm({
         name: "",
-        employee_id: "",
-        department: "",
         email: "",
-        mobile: "",
-        qualification: "",
-        password: ""
+        department: ""
       });
 
       loadTeachers();
-
     } catch (error) {
       alert(
         error.response?.data?.detail ||
-        "Failed"
+        "Failed to add teacher"
       );
     }
   };
 
+  // Delete Teacher
   const deleteTeacher = async (id) => {
     try {
-      await api.delete(
-        `/teachers/${id}`
-      );
-
+      await api.delete(`/teachers/${id}`);
       loadTeachers();
-
     } catch (error) {
       alert("Delete failed");
     }
   };
 
+  // Search Filter
   const filtered = teachers.filter((t) =>
-    `${t.name} ${t.employee_id} ${t.email}`
+    JSON.stringify(t)
       .toLowerCase()
       .includes(search.toLowerCase())
   );
@@ -111,15 +95,13 @@ function TeachersModule() {
       <div className="content-box">
         <h1>Teachers Management</h1>
         <p>
-          Add faculty members, manage
-          departments and maintain records.
+          Add, manage and remove faculty members.
         </p>
       </div>
 
-      {/* Top Grid */}
+      {/* Add Teacher Section */}
       <div className="grid">
 
-        {/* Add Teacher */}
         <div className="content-box">
           <h2>Add New Teacher</h2>
 
@@ -128,78 +110,24 @@ function TeachersModule() {
             <input
               placeholder="Full Name"
               value={form.name}
-              onChange={(e)=>
-                change(
-                  "name",
-                  e.target.value
-                )
+              onChange={(e) =>
+                change("name", e.target.value)
               }
             />
 
             <input
-              placeholder="Employee ID"
-              value={form.employee_id}
-              onChange={(e)=>
-                change(
-                  "employee_id",
-                  e.target.value
-                )
-              }
-            />
-
-            <input
-              placeholder="Department"
-              value={form.department}
-              onChange={(e)=>
-                change(
-                  "department",
-                  e.target.value
-                )
-              }
-            />
-
-            <input
-              placeholder="Email"
+              placeholder="Email Address"
               value={form.email}
-              onChange={(e)=>
-                change(
-                  "email",
-                  e.target.value
-                )
+              onChange={(e) =>
+                change("email", e.target.value)
               }
             />
 
             <input
-              placeholder="Mobile"
-              value={form.mobile}
-              onChange={(e)=>
-                change(
-                  "mobile",
-                  e.target.value
-                )
-              }
-            />
-
-            <input
-              placeholder="Qualification"
-              value={form.qualification}
-              onChange={(e)=>
-                change(
-                  "qualification",
-                  e.target.value
-                )
-              }
-            />
-
-            <input
-              type="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={(e)=>
-                change(
-                  "password",
-                  e.target.value
-                )
+              placeholder="Department / Subject"
+              value={form.department}
+              onChange={(e) =>
+                change("department", e.target.value)
               }
             />
 
@@ -213,17 +141,15 @@ function TeachersModule() {
           </button>
         </div>
 
-        {/* Summary Card */}
+        {/* Summary */}
         <div className="content-box">
-          <h2>Faculty Insights</h2>
+          <h2>Faculty Stats</h2>
 
           <div className="grid">
 
             <div className="stat-card">
-              <h2>
-                {teachers.length}
-              </h2>
-              <p>Total Faculty</p>
+              <h2>{teachers.length}</h2>
+              <p>Total Teachers</p>
             </div>
 
             <div className="stat-card">
@@ -232,8 +158,7 @@ function TeachersModule() {
                   [
                     ...new Set(
                       teachers.map(
-                        (t)=>
-                          t.department
+                        (t) => t.subject
                       )
                     )
                   ].length
@@ -244,11 +169,8 @@ function TeachersModule() {
 
           </div>
 
-          <p style={{
-            marginTop:"12px"
-          }}>
-            Maintain teacher records,
-            email IDs and faculty mapping.
+          <p style={{ marginTop: "12px" }}>
+            VisionGuard faculty database live connected.
           </p>
         </div>
 
@@ -259,15 +181,13 @@ function TeachersModule() {
         <input
           placeholder="Search teachers..."
           value={search}
-          onChange={(e)=>
-            setSearch(
-              e.target.value
-            )
+          onChange={(e) =>
+            setSearch(e.target.value)
           }
         />
       </div>
 
-      {/* Table */}
+      {/* Teachers Table */}
       <div className="content-box">
         <h2>Faculty Directory</h2>
 
@@ -277,9 +197,8 @@ function TeachersModule() {
             <tr>
               <th>ID</th>
               <th>Name</th>
-              <th>Employee ID</th>
-              <th>Department</th>
               <th>Email</th>
+              <th>Department</th>
               <th>Status</th>
               <th>Action</th>
             </tr>
@@ -294,17 +213,9 @@ function TeachersModule() {
 
                 <td>{t.name}</td>
 
-                <td>
-                  {t.employee_id}
-                </td>
+                <td>{t.email}</td>
 
-                <td>
-                  {t.department}
-                </td>
-
-                <td>
-                  {t.email}
-                </td>
+                <td>{t.subject}</td>
 
                 <td>
                   <span className="badge-green">
@@ -316,9 +227,7 @@ function TeachersModule() {
                   <button
                     className="danger-btn"
                     onClick={() =>
-                      deleteTeacher(
-                        t.id
-                      )
+                      deleteTeacher(t.id)
                     }
                   >
                     Delete
