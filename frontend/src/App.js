@@ -19,18 +19,14 @@ import StudentDashboard from "./pages/StudentDashboard";
 
 function getUser() {
   try {
-    return JSON.parse(
-      localStorage.getItem("user")
-    );
-  } catch {
+    const data = localStorage.getItem("user");
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
     return null;
   }
 }
 
-function ProtectedRoute({
-  children,
-  role
-}) {
+function ProtectedRoute({ children, role }) {
   const user = getUser();
 
   if (!user) {
@@ -42,10 +38,7 @@ function ProtectedRoute({
     );
   }
 
-  if (
-    role &&
-    user.role !== role
-  ) {
+  if (role && user.role !== role) {
     return (
       <Navigate
         to="/"
@@ -57,14 +50,10 @@ function ProtectedRoute({
   return children;
 }
 
-function PublicRoute({
-  children
-}) {
+function PublicRoute({ children }) {
   const user = getUser();
 
-  if (
-    user?.role === "admin"
-  ) {
+  if (user?.role === "admin") {
     return (
       <Navigate
         to="/admin"
@@ -73,9 +62,7 @@ function PublicRoute({
     );
   }
 
-  if (
-    user?.role === "teacher"
-  ) {
+  if (user?.role === "teacher") {
     return (
       <Navigate
         to="/teacher"
@@ -84,9 +71,7 @@ function PublicRoute({
     );
   }
 
-  if (
-    user?.role === "student"
-  ) {
+  if (user?.role === "student") {
     return (
       <Navigate
         to="/student"
@@ -101,7 +86,6 @@ function PublicRoute({
 function App() {
   return (
     <BrowserRouter>
-
       <Routes>
 
         {/* Login */}
@@ -114,7 +98,7 @@ function App() {
           }
         />
 
-        {/* Admin unchanged */}
+        {/* Admin */}
         <Route
           path="/admin"
           element={
@@ -124,7 +108,7 @@ function App() {
           }
         />
 
-        {/* Teacher unchanged */}
+        {/* Teacher */}
         <Route
           path="/teacher"
           element={
@@ -134,7 +118,7 @@ function App() {
           }
         />
 
-        {/* Real Student Portal */}
+        {/* Student */}
         <Route
           path="/student"
           element={
@@ -156,7 +140,6 @@ function App() {
         />
 
       </Routes>
-
     </BrowserRouter>
   );
 }
