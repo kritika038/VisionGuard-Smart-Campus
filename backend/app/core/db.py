@@ -1,16 +1,14 @@
 import os
 from urllib.parse import quote_plus
-
 import mysql.connector
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-# Safe env loading
-DB_HOST = os.getenv("MYSQLHOST") or os.getenv("DB_HOST") or "localhost"
-DB_PORT = int(os.getenv("MYSQLPORT") or 3306)
-DB_USER = os.getenv("MYSQLUSER") or os.getenv("DB_USER") or "root"
-DB_PASSWORD = os.getenv("MYSQLPASSWORD") or os.getenv("DB_PASSWORD") or ""
-DB_NAME = os.getenv("MYSQLDATABASE") or os.getenv("DB_NAME") or "railway"
+DB_HOST = os.getenv("MYSQLHOST")
+DB_PORT = int(os.getenv("MYSQLPORT", 3306))
+DB_USER = os.getenv("MYSQLUSER")
+DB_PASSWORD = os.getenv("MYSQLPASSWORD")
+DB_NAME = os.getenv("MYSQLDATABASE")
 
 DATABASE_URL = (
     f"mysql+pymysql://{quote_plus(DB_USER)}:"
@@ -18,11 +16,7 @@ DATABASE_URL = (
     f"{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 
-engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    pool_recycle=3600
-)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
 SessionLocal = sessionmaker(
     autocommit=False,
