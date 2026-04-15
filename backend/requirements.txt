@@ -5,6 +5,7 @@ pydantic
 python-multipart
 passlib[bcrypt]
 python-jose
+mysql-connector-python
 face_recognition
 numpy
 opencv-python-headless
