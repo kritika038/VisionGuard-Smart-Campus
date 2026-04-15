@@ -1,66 +1,23 @@
-# backend/app/core/db.py
-
-from urllib.parse import quote_plus
 import os
+from urllib.parse import quote_plus
 
 import mysql.connector
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-# ---------------------------------
-# RAILWAY MYSQL VARIABLES
-# ---------------------------------
-DB_HOST = (
-    os.getenv("MYSQLHOST")
-    or os.getenv("DB_HOST")
-    or os.getenv("PGHOST")
-)
+# Safe env loading
+DB_HOST = os.getenv("MYSQLHOST") or os.getenv("DB_HOST") or "localhost"
+DB_PORT = int(os.getenv("MYSQLPORT") or 3306)
+DB_USER = os.getenv("MYSQLUSER") or os.getenv("DB_USER") or "root"
+DB_PASSWORD = os.getenv("MYSQLPASSWORD") or os.getenv("DB_PASSWORD") or ""
+DB_NAME = os.getenv("MYSQLDATABASE") or os.getenv("DB_NAME") or "railway"
 
-DB_PORT = int(
-    os.getenv("MYSQLPORT")
-    or os.getenv("DB_PORT")
-    or 3306
-)
-
-DB_USER = (
-    os.getenv("MYSQLUSER")
-    or os.getenv("DB_USER")
-)
-
-DB_PASSWORD = (
-    os.getenv("MYSQLPASSWORD")
-    or os.getenv("DB_PASSWORD")
-)
-
-DB_NAME = (
-    os.getenv("MYSQLDATABASE")
-    or os.getenv("DB_NAME")
-)
-
-# ---------------------------------
-# FAIL FAST IF ENV NOT FOUND
-# ---------------------------------
-if not DB_HOST:
-    raise Exception("MYSQLHOST missing")
-
-if not DB_USER:
-    raise Exception("MYSQLUSER missing")
-
-if not DB_NAME:
-    raise Exception("MYSQLDATABASE missing")
-
-# ---------------------------------
-# DATABASE URL
-# ---------------------------------
 DATABASE_URL = (
     f"mysql+pymysql://{quote_plus(DB_USER)}:"
     f"{quote_plus(DB_PASSWORD)}@"
     f"{DB_HOST}:{DB_PORT}/{DB_NAME}"
 )
 
-# ---------------------------------
-# SQLALCHEMY
-# ---------------------------------
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
@@ -75,9 +32,6 @@ SessionLocal = sessionmaker(
 
 Base = declarative_base()
 
-# ---------------------------------
-# SESSION
-# ---------------------------------
 def get_db():
     db = SessionLocal()
     try:
@@ -85,9 +39,6 @@ def get_db():
     finally:
         db.close()
 
-# ---------------------------------
-# RAW MYSQL
-# ---------------------------------
 def get_mysql_connection():
     return mysql.connector.connect(
         host=DB_HOST,
