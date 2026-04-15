@@ -7,7 +7,6 @@ import React, {
 } from "react";
 
 import api from "../api";
-import { QrReader } from "react-qr-reader";
 import "../App.css";
 
 function StudentDashboard() {
@@ -31,6 +30,9 @@ function StudentDashboard() {
   const [scanMsg, setScanMsg] =
     useState("");
 
+  const [qrToken, setQrToken] =
+    useState("");
+
   const [stats, setStats] =
     useState({
       total: 0,
@@ -39,17 +41,11 @@ function StudentDashboard() {
       percent: 0
     });
 
-  // ------------------------
-  // LOAD DATA
-  // ------------------------
   const loadData =
     useCallback(async () => {
       try {
-        // Student details
         const stu =
-          await api.get(
-            "/students/"
-          );
+          await api.get("/students/");
 
         const me =
           (stu.data || []).find(
@@ -58,11 +54,8 @@ function StudentDashboard() {
               Number(user.id)
           );
 
-        // Timetable
         const tt =
-          await api.get(
-            "/timetable/"
-          );
+          await api.get("/timetable/");
 
         let filtered =
           tt.data || [];
@@ -71,34 +64,23 @@ function StudentDashboard() {
           filtered =
             filtered.filter(
               (x) =>
-                String(
-                  x.section
-                ) ===
-                String(
-                  me.section
-                )
+                String(x.section) ===
+                String(me.section)
             );
         }
 
-        setTimetable(
-          filtered
-        );
+        setTimetable(filtered);
 
-        // Attendance
         const res =
-          await api.get(
-            "/attendance/"
-          );
+          await api.get("/attendance/");
 
         const myLogs =
-          res.data.filter(
+          (res.data || []).filter(
             (x) =>
               Number(
                 x.student_id
               ) ===
-              Number(
-                user.id
-              )
+              Number(user.id)
           );
 
         setLogs(myLogs);
@@ -135,7 +117,6 @@ function StudentDashboard() {
           absent,
           percent
         });
-
       } catch (error) {
         console.log(error);
       }
@@ -145,19 +126,21 @@ function StudentDashboard() {
     loadData();
   }, [loadData]);
 
-  // ------------------------
-  // QR SCAN
-  // ------------------------
   const handleScan =
-    async (value) => {
-      if (!value) return;
+    async () => {
+      if (!qrToken.trim()) {
+        setScanMsg(
+          "Enter QR Code"
+        );
+        return;
+      }
 
       try {
         const res =
           await api.post(
             "/qr/mark-attendance",
             {
-              token: value,
+              token: qrToken,
               student_id:
                 user.id
             }
@@ -167,10 +150,9 @@ function StudentDashboard() {
           res.data.message
         );
 
-        setCameraOpen(false);
+        setQrToken("");
 
         loadData();
-
       } catch (error) {
         setScanMsg(
           error?.response
@@ -193,9 +175,7 @@ function StudentDashboard() {
       <div className="sidebar">
 
         <div className="brand-box">
-          <h2>
-            Student
-          </h2>
+          <h2>Student</h2>
           <span>
             Premium Portal
           </span>
@@ -240,61 +220,49 @@ function StudentDashboard() {
           </h2>
         </div>
 
-        {/* DASHBOARD */}
         {tab ===
           "dashboard" && (
-          <>
-            <div className="grid">
+          <div className="grid">
 
-              <div className="stat-card">
-                <h2>
-                  {
-                    stats.total
-                  }
-                </h2>
-                <p>
-                  Total Classes
-                </p>
-              </div>
-
-              <div className="stat-card">
-                <h2>
-                  {
-                    stats.present
-                  }
-                </h2>
-                <p>
-                  Present
-                </p>
-              </div>
-
-              <div className="stat-card">
-                <h2>
-                  {
-                    stats.absent
-                  }
-                </h2>
-                <p>
-                  Absent
-                </p>
-              </div>
-
-              <div className="stat-card">
-                <h2>
-                  {
-                    stats.percent
-                  }%
-                </h2>
-                <p>
-                  Attendance %
-                </p>
-              </div>
-
+            <div className="stat-card">
+              <h2>
+                {stats.total}
+              </h2>
+              <p>
+                Total Classes
+              </p>
             </div>
-          </>
+
+            <div className="stat-card">
+              <h2>
+                {
+                  stats.present
+                }
+              </h2>
+              <p>Present</p>
+            </div>
+
+            <div className="stat-card">
+              <h2>
+                {stats.absent}
+              </h2>
+              <p>Absent</p>
+            </div>
+
+            <div className="stat-card">
+              <h2>
+                {
+                  stats.percent
+                }%
+              </h2>
+              <p>
+                Attendance %
+              </p>
+            </div>
+
+          </div>
         )}
 
-        {/* SCAN */}
         {tab === "scan" && (
           <div className="content-box">
 
@@ -311,28 +279,48 @@ function StudentDashboard() {
               }
             >
               {cameraOpen
-                ? "Close Camera"
-                : "Open Camera"}
+                ? "Close QR Entry"
+                : "Open QR Entry"}
             </button>
 
             {cameraOpen && (
-              <QrReader
-                constraints={{
-                  facingMode:
-                    "environment"
+              <div
+                style={{
+                  marginTop:
+                    "20px"
                 }}
-                onResult={(
-                  result
-                ) => {
-                  if (
-                    result
-                  ) {
-                    handleScan(
-                      result?.text
-                    );
+              >
+                <input
+                  type="text"
+                  value={qrToken}
+                  onChange={(
+                    e
+                  ) =>
+                    setQrToken(
+                      e.target
+                        .value
+                    )
                   }
-                }}
-              />
+                  placeholder="Paste / Enter QR Token"
+                  style={{
+                    width:
+                      "100%",
+                    padding:
+                      "12px",
+                    marginBottom:
+                      "12px"
+                  }}
+                />
+
+                <button
+                  className="primary-btn"
+                  onClick={
+                    handleScan
+                  }
+                >
+                  Submit QR
+                </button>
+              </div>
             )}
 
             {scanMsg && (
@@ -346,7 +334,6 @@ function StudentDashboard() {
           </div>
         )}
 
-        {/* FILTERED TIMETABLE */}
         {tab ===
           "timetable" && (
           <div className="content-box">
@@ -358,18 +345,12 @@ function StudentDashboard() {
             <table className="student-table">
               <thead>
                 <tr>
-                  <th>
-                    Day
-                  </th>
-                  <th>
-                    Time
-                  </th>
+                  <th>Day</th>
+                  <th>Time</th>
                   <th>
                     Subject
                   </th>
-                  <th>
-                    Room
-                  </th>
+                  <th>Room</th>
                 </tr>
               </thead>
 
@@ -390,10 +371,7 @@ function StudentDashboard() {
                       <td>
                         {
                           x.start_time
-                        }{" "}
-                        -
-                        {" "}
-                        {
+                        } - {
                           x.end_time
                         }
                       </td>
@@ -418,7 +396,6 @@ function StudentDashboard() {
           </div>
         )}
 
-        {/* ATTENDANCE */}
         {tab ===
           "attendance" && (
           <div className="content-box">
@@ -436,9 +413,7 @@ function StudentDashboard() {
                   <th>
                     Status
                   </th>
-                  <th>
-                    Date
-                  </th>
+                  <th>Date</th>
                 </tr>
               </thead>
 
@@ -476,7 +451,6 @@ function StudentDashboard() {
           </div>
         )}
 
-        {/* PROFILE */}
         {tab ===
           "profile" && (
           <div className="content-box">
@@ -486,15 +460,11 @@ function StudentDashboard() {
             </h1>
 
             <p>
-              Name:
-              {" "}
-              {user.name}
+              Name: {user.name}
             </p>
 
             <p>
-              ID:
-              {" "}
-              {user.id}
+              ID: {user.id}
             </p>
 
           </div>
