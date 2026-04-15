@@ -1,35 +1,61 @@
+# backend/app/main.py
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes.auth import router as auth_router
-from app.routes.attendance import router as attendance_router
-from app.routes.qr_attendance import router as qr_router
-from app.routes.student import router as student_router
-from app.routes.subject import router as subject_router
-from app.routes.teacher import router as teacher_router
-from app.routes.timetable import router as timetable_router
+from app.routes import auth
+from app.routes import students
+from app.routes import teachers
+from app.routes import subjects
+from app.routes import timetable
+from app.routes import attendance
+from app.routes import qr
+from app.routes import face_attendance
 
-app = FastAPI(title="VisionGuard API")
+app = FastAPI(
+    title="VisionGuard Backend"
+)
+
+# ---------------------------------------------------
+# CORS FIX
+# ---------------------------------------------------
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+
+        "https://vision-guard-smart-campus-green.vercel.app",
+        "https://vision-guard-smart-campus.vercel.app",
+
+        "https://*.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# ---------------------------------------------------
+# ROUTES
+# ---------------------------------------------------
+
+app.include_router(auth.router)
+app.include_router(students.router)
+app.include_router(teachers.router)
+app.include_router(subjects.router)
+app.include_router(timetable.router)
+app.include_router(attendance.router)
+app.include_router(qr.router)
+app.include_router(face_attendance.router)
+
+# ---------------------------------------------------
+# ROOT
+# ---------------------------------------------------
+
 @app.get("/")
-def home():
+def root():
     return {
         "message": "VisionGuard Backend Running",
         "status": "success"
     }
-
-app.include_router(auth_router)
-app.include_router(attendance_router)
-app.include_router(qr_router)
-app.include_router(student_router)
-app.include_router(subject_router)
-app.include_router(teacher_router)
-app.include_router(timetable_router)
