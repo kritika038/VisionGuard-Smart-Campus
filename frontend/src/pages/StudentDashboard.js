@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useState
 } from "react";
+
 import api from "../api";
 import { QrReader } from "react-qr-reader";
 import "../App.css";
@@ -19,6 +20,9 @@ function StudentDashboard() {
     useState("dashboard");
 
   const [logs, setLogs] =
+    useState([]);
+
+  const [timetable, setTimetable] =
     useState([]);
 
   const [cameraOpen, setCameraOpen] =
@@ -38,63 +42,104 @@ function StudentDashboard() {
   // ------------------------
   // LOAD DATA
   // ------------------------
-  const loadData = useCallback(async () => {
-    try {
-      const res =
-        await api.get(
-          "/attendance/"
+  const loadData =
+    useCallback(async () => {
+      try {
+        // Student details
+        const stu =
+          await api.get(
+            "/students/"
+          );
+
+        const me =
+          (stu.data || []).find(
+            (x) =>
+              Number(x.id) ===
+              Number(user.id)
+          );
+
+        // Timetable
+        const tt =
+          await api.get(
+            "/timetable/"
+          );
+
+        let filtered =
+          tt.data || [];
+
+        if (me) {
+          filtered =
+            filtered.filter(
+              (x) =>
+                String(
+                  x.section
+                ) ===
+                String(
+                  me.section
+                )
+            );
+        }
+
+        setTimetable(
+          filtered
         );
 
-      const myLogs =
-        res.data.filter(
-          (x) =>
-            Number(
-              x.student_id
-            ) ===
-            Number(
-              user.id
-            )
-        );
+        // Attendance
+        const res =
+          await api.get(
+            "/attendance/"
+          );
 
-      setLogs(myLogs);
+        const myLogs =
+          res.data.filter(
+            (x) =>
+              Number(
+                x.student_id
+              ) ===
+              Number(
+                user.id
+              )
+          );
 
-      const total =
-        myLogs.length;
+        setLogs(myLogs);
 
-      const present =
-        myLogs.filter(
-          (x) =>
-            x.status ===
-            "Present"
-        ).length;
+        const total =
+          myLogs.length;
 
-      const absent =
-        myLogs.filter(
-          (x) =>
-            x.status ===
-            "Absent"
-        ).length;
+        const present =
+          myLogs.filter(
+            (x) =>
+              x.status ===
+              "Present"
+          ).length;
 
-      const percent =
-        total > 0
-          ? Math.round(
-              (present /
-                total) *
-                100
-            )
-          : 0;
+        const absent =
+          myLogs.filter(
+            (x) =>
+              x.status ===
+              "Absent"
+          ).length;
 
-      setStats({
-        total,
-        present,
-        absent,
-        percent
-      });
+        const percent =
+          total > 0
+            ? Math.round(
+                (present /
+                  total) *
+                  100
+              )
+            : 0;
 
-    } catch (error) {
-      console.log(error);
-    }
-  }, [user.id]);
+        setStats({
+          total,
+          present,
+          absent,
+          percent
+        });
+
+      } catch (error) {
+        console.log(error);
+      }
+    }, [user.id]);
 
   useEffect(() => {
     loadData();
@@ -145,7 +190,6 @@ function StudentDashboard() {
   return (
     <div className="admin-layout">
 
-      {/* SIDEBAR */}
       <div className="sidebar">
 
         <div className="brand-box">
@@ -160,6 +204,7 @@ function StudentDashboard() {
         {[
           "dashboard",
           "scan",
+          "timetable",
           "attendance",
           "profile"
         ].map((item) => (
@@ -187,7 +232,6 @@ function StudentDashboard() {
 
       </div>
 
-      {/* MAIN */}
       <div className="main-panel">
 
         <div className="topbar">
@@ -239,8 +283,7 @@ function StudentDashboard() {
                 <h2>
                   {
                     stats.percent
-                  }
-                  %
+                  }%
                 </h2>
                 <p>
                   Attendance %
@@ -248,25 +291,10 @@ function StudentDashboard() {
               </div>
 
             </div>
-
-            <div className="content-box">
-              <h1>
-                Student Overview
-              </h1>
-
-              <p>
-                Scan QR code to
-                mark attendance,
-                monitor your
-                records and
-                maintain good
-                percentage.
-              </p>
-            </div>
           </>
         )}
 
-        {/* QR SCAN */}
+        {/* SCAN */}
         {tab === "scan" && (
           <div className="content-box">
 
@@ -288,54 +316,104 @@ function StudentDashboard() {
             </button>
 
             {cameraOpen && (
-              <div
-                style={{
-                  marginTop:
-                    "20px",
-                  borderRadius:
-                    "18px",
-                  overflow:
-                    "hidden"
+              <QrReader
+                constraints={{
+                  facingMode:
+                    "environment"
                 }}
-              >
-                <QrReader
-                  constraints={{
-                    facingMode:
-                      "environment"
-                  }}
-                  onResult={(
-                    result,
-                    error
-                  ) => {
-                    if (
-                      result
-                    ) {
-                      handleScan(
-                        result?.text
-                      );
-                    }
-                  }}
-                  style={{
-                    width:
-                      "100%"
-                  }}
-                />
-              </div>
+                onResult={(
+                  result
+                ) => {
+                  if (
+                    result
+                  ) {
+                    handleScan(
+                      result?.text
+                    );
+                  }
+                }}
+              />
             )}
 
             {scanMsg && (
-              <div
-                className="stat-card"
-                style={{
-                  marginTop:
-                    "20px"
-                }}
-              >
+              <div className="stat-card">
                 <h2>
                   {scanMsg}
                 </h2>
               </div>
             )}
+
+          </div>
+        )}
+
+        {/* FILTERED TIMETABLE */}
+        {tab ===
+          "timetable" && (
+          <div className="content-box">
+
+            <h1>
+              My Timetable
+            </h1>
+
+            <table className="student-table">
+              <thead>
+                <tr>
+                  <th>
+                    Day
+                  </th>
+                  <th>
+                    Time
+                  </th>
+                  <th>
+                    Subject
+                  </th>
+                  <th>
+                    Room
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {timetable.map(
+                  (x) => (
+                    <tr
+                      key={
+                        x.id
+                      }
+                    >
+                      <td>
+                        {
+                          x.day_name
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          x.start_time
+                        }{" "}
+                        -
+                        {" "}
+                        {
+                          x.end_time
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          x.subject_name
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          x.room_no
+                        }
+                      </td>
+                    </tr>
+                  )
+                )}
+              </tbody>
+            </table>
 
           </div>
         )}
@@ -347,7 +425,6 @@ function StudentDashboard() {
 
             <h1>
               Attendance
-              Records
             </h1>
 
             <table className="student-table">
@@ -405,21 +482,18 @@ function StudentDashboard() {
           <div className="content-box">
 
             <h1>
-              My Profile
+              Profile
             </h1>
 
             <p>
-              Name:{" "}
+              Name:
+              {" "}
               {user.name}
             </p>
 
             <p>
-              Role:
-              Student
-            </p>
-
-            <p>
               ID:
+              {" "}
               {user.id}
             </p>
 

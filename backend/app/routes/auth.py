@@ -11,7 +11,11 @@ router = APIRouter(
 
 class LoginData(BaseModel):
     email: EmailStr
-    password: str = Field(..., min_length=1, max_length=128)
+    password: str = Field(
+        ...,
+        min_length=1,
+        max_length=128
+    )
 
 
 @router.post("/login")
@@ -19,14 +23,51 @@ def login(data: LoginData):
     email = data.email.strip().lower()
     password = data.password.strip()
 
-    # Admin login works even if database is down
-    if email == "admin@visionguard.com" and password == "admin123":
+    # ---------------------------------
+    # ADMIN LOGIN
+    # ---------------------------------
+    if (
+        email == "admin@visionguard.com"
+        and password == "admin123"
+    ):
         return {
             "success": True,
             "role": "admin",
             "name": "Administrator",
+            "id": 999
         }
 
+    # ---------------------------------
+    # FIXED DEMO TEACHER LOGIN
+    # ---------------------------------
+    if (
+        email == "teacher_1776260675@visionguard.com"
+        and password == "123456"
+    ):
+        return {
+            "success": True,
+            "role": "teacher",
+            "name": "Teacher Demo",
+            "id": 1
+        }
+
+    # ---------------------------------
+    # FIXED DEMO STUDENT LOGIN
+    # ---------------------------------
+    if (
+        email == "kritikabansal3@gmail.com"
+        and password == "123456"
+    ):
+        return {
+            "success": True,
+            "role": "student",
+            "name": "Kritika Bansal",
+            "id": 1
+        }
+
+    # ---------------------------------
+    # DATABASE LOGIN
+    # ---------------------------------
     db = get_mysql_connection()
     cur = db.cursor(dictionary=True)
 
@@ -34,11 +75,17 @@ def login(data: LoginData):
         # Teacher Login
         cur.execute(
             """
-            SELECT * FROM teachers
-            WHERE LOWER(email)=%s AND password=%s
+            SELECT *
+            FROM teachers
+            WHERE LOWER(email)=%s
+            AND password=%s
             """,
-            (email, password),
+            (
+                email,
+                password
+            ),
         )
+
         teacher = cur.fetchone()
 
         if teacher:
@@ -52,11 +99,17 @@ def login(data: LoginData):
         # Student Login
         cur.execute(
             """
-            SELECT * FROM students
-            WHERE LOWER(email)=%s AND password=%s
+            SELECT *
+            FROM students
+            WHERE LOWER(email)=%s
+            AND password=%s
             """,
-            (email, password),
+            (
+                email,
+                password
+            ),
         )
+
         student = cur.fetchone()
 
         if student:
@@ -67,7 +120,10 @@ def login(data: LoginData):
                 "id": student["id"],
             }
 
-        raise HTTPException(status_code=401, detail="Invalid Email or Password")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Email or Password"
+        )
 
     finally:
         cur.close()

@@ -95,7 +95,7 @@ function Login() {
             <br />
 
             <p><strong>Student Portal</strong></p>
-            <p>Email: student@visionguard.com</p>
+            <p>Email: kritikabansal3@gmail.com</p>
             <p>Password: 123456</p>
           </div>
         </form>

@@ -1,25 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.config import get_settings
-from app.routes import attendance
 from app.routes import auth
-from app.routes import qr_attendance
 from app.routes import student
-from app.routes import subject
 from app.routes import teacher
+from app.routes import subject
 from app.routes import timetable
+from app.routes import attendance
+from app.routes import qr_attendance
 
-settings = get_settings()
-
-app = FastAPI(
-    title="VisionGuard API",
-    version="3.0.0",
-)
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,6 +26,7 @@ app.include_router(subject.router)
 app.include_router(timetable.router)
 app.include_router(attendance.router)
 app.include_router(qr_attendance.router)
+
 
 
 @app.get("/")
