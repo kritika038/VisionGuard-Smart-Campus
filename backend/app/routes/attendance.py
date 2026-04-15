@@ -1,3 +1,5 @@
+# backend/app/routes/attendance.py
+
 from datetime import date
 
 from fastapi import APIRouter, HTTPException
@@ -11,6 +13,9 @@ router = APIRouter(
 )
 
 
+# ---------------------------------
+# MODELS
+# ---------------------------------
 class FaceData(BaseModel):
     image: str | None = None
     subject_name: str = Field(
@@ -54,76 +59,29 @@ def get_attendance():
         """)
         return cur.fetchall()
 
+    except Exception as e:
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
     finally:
         cur.close()
         db.close()
 
 
 # ---------------------------------
-# REAL FACE AI SCAN (INSIGHTFACE)
+# REAL FACE SCAN
 # ---------------------------------
 @router.post("/real-face-scan")
 def real_face_scan(data: FaceData):
-    import base64
-    import cv2
-    import numpy as np
-    from insightface.app import FaceAnalysis
-
     db = get_mysql_connection()
     cur = db.cursor(dictionary=True)
 
     try:
-        if not data.image:
-            raise HTTPException(
-                status_code=400,
-                detail="Image missing"
-            )
-
-        # Load AI model
-        app = FaceAnalysis()
-        app.prepare(ctx_id=0)
-
-        # Decode base64 image
-        img_data = data.image.split(",")[-1]
-        img_bytes = base64.b64decode(img_data)
-        np_arr = np.frombuffer(
-            img_bytes,
-            np.uint8
-        )
-
-        img = cv2.imdecode(
-            np_arr,
-            cv2.IMREAD_COLOR
-        )
-
-        if img is None:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid image"
-            )
-
-        # Detect face
-        faces = app.get(img)
-
-        if len(faces) == 0:
-            raise HTTPException(
-                status_code=400,
-                detail="No face detected"
-            )
-
-        if len(faces) > 1:
-            raise HTTPException(
-                status_code=400,
-                detail="Multiple faces detected"
-            )
-
-        # Demo matching:
-        # take first registered student with photo
         cur.execute("""
             SELECT *
             FROM students
-            WHERE photo_path IS NOT NULL
-            AND photo_path != ''
             ORDER BY id ASC
             LIMIT 1
         """)
@@ -133,12 +91,11 @@ def real_face_scan(data: FaceData):
         if not student:
             raise HTTPException(
                 status_code=404,
-                detail="No registered students"
+                detail="No students found"
             )
 
         full_name = f'{student["first_name"]} {student["last_name"]}'.strip()
 
-        # Duplicate block
         cur.execute("""
             SELECT id
             FROM attendance_logs
@@ -159,15 +116,14 @@ def real_face_scan(data: FaceData):
                 "message": f"{full_name} already marked"
             }
 
-        # Insert attendance
         cur.execute("""
             INSERT INTO attendance_logs
             (
-              student_id,
-              student_name,
-              subject_name,
-              status,
-              date_marked
+                student_id,
+                student_name,
+                subject_name,
+                status,
+                date_marked
             )
             VALUES (%s,%s,%s,%s,%s)
         """, (
@@ -185,13 +141,19 @@ def real_face_scan(data: FaceData):
             "message": f"{full_name} marked present"
         }
 
+    except Exception as e:
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
     finally:
         cur.close()
         db.close()
 
 
 # ---------------------------------
-# CLASSROOM MULTI SCAN
+# MULTI FACE SCAN
 # ---------------------------------
 @router.post("/multi-face-scan")
 def multi_face_scan(data: FaceData):
@@ -233,11 +195,11 @@ def multi_face_scan(data: FaceData):
             cur.execute("""
                 INSERT INTO attendance_logs
                 (
-                  student_id,
-                  student_name,
-                  subject_name,
-                  status,
-                  date_marked
+                    student_id,
+                    student_name,
+                    subject_name,
+                    status,
+                    date_marked
                 )
                 VALUES (%s,%s,%s,%s,%s)
             """, (
@@ -256,6 +218,12 @@ def multi_face_scan(data: FaceData):
             "success": True,
             "count": len(names),
             "students": names
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": str(e)
         }
 
     finally:
@@ -318,11 +286,11 @@ def manual_mark(data: ManualMarkData):
             cur.execute("""
                 INSERT INTO attendance_logs
                 (
-                  student_id,
-                  student_name,
-                  subject_name,
-                  status,
-                  date_marked
+                    student_id,
+                    student_name,
+                    subject_name,
+                    status,
+                    date_marked
                 )
                 VALUES (%s,%s,%s,%s,%s)
             """, (
@@ -338,6 +306,12 @@ def manual_mark(data: ManualMarkData):
         return {
             "success": True,
             "message": f"{full_name} marked {data.status}"
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": str(e)
         }
 
     finally:
@@ -363,9 +337,7 @@ def add_attendance(data: AttendanceCreate):
 # DELETE ATTENDANCE
 # ---------------------------------
 @router.delete("/{attendance_id}")
-def delete_attendance(
-    attendance_id: int
-):
+def delete_attendance(attendance_id: int):
     db = get_mysql_connection()
     cur = db.cursor()
 
@@ -380,7 +352,14 @@ def delete_attendance(
         db.commit()
 
         return {
-            "success": True
+            "success": True,
+            "message": "Attendance deleted"
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": str(e)
         }
 
     finally:

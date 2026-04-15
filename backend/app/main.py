@@ -1,10 +1,24 @@
+# backend/app/main.py
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import auth, student, teacher, subject, timetable, attendance, qr_attendance
+from app.routes import auth
+from app.routes import student
+from app.routes import teacher
+from app.routes import subject
+from app.routes import timetable
+from app.routes import attendance
+from app.routes import qr_attendance
 
-app = FastAPI()
+app = FastAPI(
+    title="VisionGuard Backend",
+    version="1.0.0"
+)
 
+# ---------------------------------
+# CORS
+# ---------------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -13,6 +27,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ---------------------------------
+# ROUTES
+# ---------------------------------
 app.include_router(auth.router)
 app.include_router(student.router)
 app.include_router(teacher.router)
@@ -21,6 +38,21 @@ app.include_router(timetable.router)
 app.include_router(attendance.router)
 app.include_router(qr_attendance.router)
 
+# ---------------------------------
+# ROOT
+# ---------------------------------
 @app.get("/")
 def root():
-    return {"status": "running"}
+    return {
+        "status": "running",
+        "message": "VisionGuard Backend Live"
+    }
+
+# ---------------------------------
+# HEALTH CHECK
+# ---------------------------------
+@app.get("/health")
+def health():
+    return {
+        "success": True
+    }

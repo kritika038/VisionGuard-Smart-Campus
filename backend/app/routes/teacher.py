@@ -1,71 +1,63 @@
-from fastapi import APIRouter, Request, HTTPException
+# backend/app/routes/teacher.py
+
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 from sqlalchemy import text
-from app.core.db import engine
-import time
 
-router = APIRouter(prefix="/teachers", tags=["Teachers"])
+from app.core.db import get_db
 
+router = APIRouter(
+    prefix="/teachers",
+    tags=["Teachers"]
+)
+
+# -----------------------------------
+# GET ALL TEACHERS
+# -----------------------------------
 @router.get("/")
-def get_teachers():
-    with engine.connect() as conn:
-        rows = conn.execute(
-            text("SELECT * FROM teachers ORDER BY id DESC")
-        ).mappings().all()
-    return [dict(x) for x in rows]
-
-@router.post("/add")
-async def add_teacher(req: Request):
+def get_teachers(db: Session = Depends(get_db)):
     try:
-        data = await req.json()
-        ts = str(int(time.time()))
+        result = db.execute(text("SELECT * FROM teachers"))
+        rows = result.mappings().all()
+        return rows
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
-        name = data.get("name") or "Teacher"
-        employee_id = data.get("employee_id") or f"EMP{ts}"
-        department = data.get("department") or "General"
-
-        email = data.get("email") or f"teacher{ts}@demo.com"
-        if "@" in email:
-            a,b = email.split("@",1)
-            email = f"{a}_{ts}@{b}"
-
-        mobile = data.get("mobile") or ""
-        qualification = data.get("qualification") or ""
-        password = data.get("password") or "123456"
-
-        with engine.connect() as conn:
-            conn.execute(text("""
+# -----------------------------------
+# ADD TEACHER
+# -----------------------------------
+@router.post("/")
+def add_teacher(data: dict, db: Session = Depends(get_db)):
+    try:
+        query = text("""
             INSERT INTO teachers
-            (
-              name,employee_id,department,
-              email,mobile,qualification,password
-            )
+            (name, email, phone, department, subject, password)
             VALUES
-            (
-              :name,:employee_id,:department,
-              :email,:mobile,:qualification,:password
-            )
-            """),{
-              "name": name,
-              "employee_id": employee_id,
-              "department": department,
-              "email": email,
-              "mobile": mobile,
-              "qualification": qualification,
-              "password": password
-            })
-            conn.commit()
+            (:name, :email, :phone, :department, :subject, :password)
+        """)
 
-        return {"success":True}
+        db.execute(query, {
+            "name": data.get("name"),
+            "email": data.get("email"),
+            "phone": data.get("phone"),
+            "department": data.get("department"),
+            "subject": data.get("subject"),
+            "password": data.get("password")
+        })
+
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": "Teacher added successfully"
+        }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.delete("/{teacher_id}")
-def delete_teacher(teacher_id:int):
-    with engine.connect() as conn:
-        conn.execute(
-            text("DELETE FROM teachers WHERE id=:id"),
-            {"id": teacher_id}
-        )
-        conn.commit()
-    return {"success":True}
+        db.rollback()
+        return {
+            "status": "error",
+            "message": str(e)
+        }

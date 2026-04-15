@@ -1,64 +1,83 @@
 # backend/app/routes/timetable.py
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 from sqlalchemy import text
-from app.core.db import engine
 
-router = APIRouter(prefix="/timetable", tags=["Timetable"])
+from app.core.db import get_db
 
+router = APIRouter(
+    prefix="/timetable",
+    tags=["Timetable"]
+)
 
+# -----------------------------------
+# GET ALL TIMETABLE
+# -----------------------------------
 @router.get("/")
-def get_timetable():
-    with engine.connect() as conn:
-        rows = conn.execute(
-            text("SELECT * FROM timetable ORDER BY id DESC")
-        ).mappings().all()
+def get_timetable(db: Session = Depends(get_db)):
+    try:
+        result = db.execute(text("SELECT * FROM timetable ORDER BY id DESC"))
+        rows = result.mappings().all()
+        return rows
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
-    return rows
+# -----------------------------------
+# ADD TIMETABLE
+# -----------------------------------
+@router.post("/")
+def add_timetable(data: dict, db: Session = Depends(get_db)):
+    try:
+        query = text("""
+            INSERT INTO timetable
+            (
+                day_name,
+                start_time,
+                end_time,
+                subject_name,
+                teacher_name,
+                room_no,
+                semester,
+                section
+            )
+            VALUES
+            (
+                :day_name,
+                :start_time,
+                :end_time,
+                :subject_name,
+                :teacher_name,
+                :room_no,
+                :semester,
+                :section
+            )
+        """)
 
+        db.execute(query, {
+            "day_name": data.get("day_name"),
+            "start_time": data.get("start_time"),
+            "end_time": data.get("end_time"),
+            "subject_name": data.get("subject_name"),
+            "teacher_name": data.get("teacher_name"),
+            "room_no": data.get("room_no"),
+            "semester": data.get("semester"),
+            "section": data.get("section")
+        })
 
-@router.post("/add")
-def add_timetable(data: dict):
-    with engine.connect() as conn:
-        conn.execute(text("""
-        INSERT INTO timetable
-        (
-          day_name,
-          start_time,
-          end_time,
-          subject_name,
-          teacher_name,
-          room_no,
-          semester,
-          section
-        )
-        VALUES
-        (
-          :day_name,
-          :start_time,
-          :end_time,
-          :subject_name,
-          :teacher_name,
-          :room_no,
-          :semester,
-          :section
-        )
-        """), data)
+        db.commit()
 
-        conn.commit()
+        return {
+            "status": "success",
+            "message": "Timetable added successfully"
+        }
 
-    return {"success": True}
-
-
-@router.delete("/{row_id}")
-def delete_timetable(row_id: int):
-    with engine.connect() as conn:
-        conn.execute(
-            text(
-              "DELETE FROM timetable WHERE id=:id"
-            ),
-            {"id": row_id}
-        )
-        conn.commit()
-
-    return {"success": True}
+    except Exception as e:
+        db.rollback()
+        return {
+            "status": "error",
+            "message": str(e)
+        }

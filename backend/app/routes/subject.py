@@ -1,60 +1,62 @@
 # backend/app/routes/subject.py
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 from sqlalchemy import text
-from app.core.db import engine
 
-router = APIRouter(prefix="/subjects", tags=["Subjects"])
+from app.core.db import get_db
 
+router = APIRouter(
+    prefix="/subjects",
+    tags=["Subjects"]
+)
 
+# -----------------------------------
+# GET ALL SUBJECTS
+# -----------------------------------
 @router.get("/")
-def get_subjects():
-    with engine.connect() as conn:
-        rows = conn.execute(
-            text("SELECT * FROM subjects ORDER BY id DESC")
-        ).mappings().all()
+def get_subjects(db: Session = Depends(get_db)):
+    try:
+        result = db.execute(text("SELECT * FROM subjects"))
+        rows = result.mappings().all()
+        return rows
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
 
-    return rows
+# -----------------------------------
+# ADD SUBJECT
+# -----------------------------------
+@router.post("/")
+def add_subject(data: dict, db: Session = Depends(get_db)):
+    try:
+        query = text("""
+            INSERT INTO subjects
+            (subject_name, subject_code, department, semester, teacher_name)
+            VALUES
+            (:subject_name, :subject_code, :department, :semester, :teacher_name)
+        """)
 
+        db.execute(query, {
+            "subject_name": data.get("subject_name"),
+            "subject_code": data.get("subject_code"),
+            "department": data.get("department"),
+            "semester": data.get("semester"),
+            "teacher_name": data.get("teacher_name")
+        })
 
-@router.post("/add")
-def add_subject(data: dict):
-    with engine.connect() as conn:
-        conn.execute(text("""
-        INSERT INTO subjects
-        (
-          subject_name,
-          subject_code,
-          semester,
-          department,
-          teacher_name,
-          credits
-        )
-        VALUES
-        (
-          :subject_name,
-          :subject_code,
-          :semester,
-          :department,
-          :teacher_name,
-          :credits
-        )
-        """), data)
+        db.commit()
 
-        conn.commit()
+        return {
+            "status": "success",
+            "message": "Subject added successfully"
+        }
 
-    return {"success": True}
-
-
-@router.delete("/{subject_id}")
-def delete_subject(subject_id: int):
-    with engine.connect() as conn:
-        conn.execute(
-            text(
-              "DELETE FROM subjects WHERE id=:id"
-            ),
-            {"id": subject_id}
-        )
-        conn.commit()
-
-    return {"success": True}
+    except Exception as e:
+        db.rollback()
+        return {
+            "status": "error",
+            "message": str(e)
+        }
