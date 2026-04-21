@@ -49,8 +49,8 @@ Add screenshots here after deployment:
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/kritika038/VisionGuard-AI-Attendance-System.git
-cd VisionGuard-AI-Attendance-System
+git clone https://github.com/kritika038/VisionGuard-Smart-Campus.git
+cd VisionGuard-Smart-Campus
 ```
 
 ### 2. Configure backend
@@ -63,13 +63,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Update `backend/.env` with your MySQL values.
-
-### 3. Create database tables
-
-```bash
-mysql -u root -p < backend/sql/schema.sql
-```
+Update `backend/.env` with your MySQL values. The backend bootstraps the schema on startup, so you do not need to run migrations manually for local or Railway deployments.
 
 ### 4. Run backend
 
@@ -107,14 +101,14 @@ npm start
 3. Add a backend service from this GitHub repo.
 4. Set the backend service root to the repository root and let `railway.toml` handle startup.
 5. Add environment variables:
-   - `DB_HOST`
-   - `DB_PORT`
-   - `DB_USER`
-   - `DB_PASSWORD`
-   - `DB_NAME`
+   - `MYSQLHOST`
+   - `MYSQLPORT`
+   - `MYSQLUSER`
+   - `MYSQLPASSWORD`
+   - `MYSQLDATABASE`
    - `CORS_ORIGINS`
-6. Run the schema in `backend/sql/schema.sql` against the Railway MySQL instance.
-7. Deploy and confirm the `/` endpoint returns `VisionGuard Backend Running`.
+   - `CORS_ORIGIN_REGEX`
+6. Deploy and confirm `/health` returns `{"success": true, "database": true}`.
 
 ### Frontend on Vercel
 
@@ -124,6 +118,11 @@ npm start
 4. Add environment variable:
    - `REACT_APP_API_URL=https://your-railway-backend.up.railway.app`
 5. Deploy. The included `frontend/vercel.json` handles SPA routing for `/`, `/admin`, `/teacher`, and `/student`.
+
+## Live Deployment
+
+- Frontend: `https://frontend-one-blush-51.vercel.app`
+- Backend: `https://visionguard-smart-campus-production.up.railway.app`
 
 ## Demo Credentials
 

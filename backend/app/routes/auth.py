@@ -40,34 +40,6 @@ def login(data: LoginData):
     # ---------------------------------
     # FIXED DEMO TEACHER LOGIN
     # ---------------------------------
-    if (
-        email == "teacher_1776260675@visionguard.com"
-        and password == "123456"
-    ):
-        return {
-            "success": True,
-            "role": "teacher",
-            "name": "Teacher Demo",
-            "id": 1
-        }
-
-    # ---------------------------------
-    # FIXED DEMO STUDENT LOGIN
-    # ---------------------------------
-    if (
-        email == "kritikabansal3@gmail.com"
-        and password == "123456"
-    ):
-        return {
-            "success": True,
-            "role": "student",
-            "name": "Kritika Bansal",
-            "id": 1
-        }
-
-    # ---------------------------------
-    # DATABASE LOGIN
-    # ---------------------------------
     db = get_mysql_connection()
     cur = db.cursor(dictionary=True)
 
@@ -128,3 +100,26 @@ def login(data: LoginData):
     finally:
         cur.close()
         db.close()
+
+
+plain_router = APIRouter(tags=["Auth"])
+
+
+@plain_router.post("/login")
+def plain_login(data: LoginData):
+    return login(data)
+
+
+@plain_router.post("/login/")
+def plain_login_with_slash(data: LoginData):
+    return login(data)
+
+
+@router.post("/login/")
+def login_with_slash(data: LoginData):
+    return login(data)
+
+
+@router.post("/login-alias")
+def login_alias(data: LoginData):
+    return login(data)

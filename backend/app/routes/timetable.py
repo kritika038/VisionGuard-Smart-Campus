@@ -1,6 +1,4 @@
-# backend/app/routes/timetable.py
-
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 
@@ -11,9 +9,28 @@ router = APIRouter(
     tags=["Timetable"]
 )
 
-# -----------------------------------
-# GET ALL TIMETABLE
-# -----------------------------------
+
+def _timetable_payload(data: dict):
+    required_fields = ("day_name", "start_time", "end_time", "subject_name", "teacher_name")
+    missing = [field for field in required_fields if not str(data.get(field) or "").strip()]
+    if missing:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Missing required fields: {', '.join(missing)}",
+        )
+
+    return {
+        "day_name": str(data.get("day_name")).strip(),
+        "start_time": str(data.get("start_time")).strip(),
+        "end_time": str(data.get("end_time")).strip(),
+        "subject_name": str(data.get("subject_name")).strip(),
+        "teacher_name": str(data.get("teacher_name")).strip(),
+        "room_no": str(data.get("room_no") or "").strip(),
+        "semester": str(data.get("semester") or "").strip(),
+        "section": str(data.get("section") or "").strip(),
+    }
+
+
 @router.get("/")
 def get_timetable(db: Session = Depends(get_db)):
     try:
@@ -26,12 +43,12 @@ def get_timetable(db: Session = Depends(get_db)):
             "message": str(e)
         }
 
-# -----------------------------------
-# ADD TIMETABLE
-# -----------------------------------
+
 @router.post("/")
+@router.post("/add")
 def add_timetable(data: dict, db: Session = Depends(get_db)):
     try:
+        payload = _timetable_payload(data)
         query = text("""
             INSERT INTO timetable
             (
@@ -56,17 +73,7 @@ def add_timetable(data: dict, db: Session = Depends(get_db)):
                 :section
             )
         """)
-
-        db.execute(query, {
-            "day_name": data.get("day_name"),
-            "start_time": data.get("start_time"),
-            "end_time": data.get("end_time"),
-            "subject_name": data.get("subject_name"),
-            "teacher_name": data.get("teacher_name"),
-            "room_no": data.get("room_no"),
-            "semester": data.get("semester"),
-            "section": data.get("section")
-        })
+        db.execute(query, payload)
 
         db.commit()
 
@@ -75,6 +82,23 @@ def add_timetable(data: dict, db: Session = Depends(get_db)):
             "message": "Timetable added successfully"
         }
 
+    except Exception as e:
+        db.rollback()
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+
+
+@router.delete("/{timetable_id}")
+def delete_timetable(timetable_id: int, db: Session = Depends(get_db)):
+    try:
+        db.execute(text("DELETE FROM timetable WHERE id=:timetable_id"), {"timetable_id": timetable_id})
+        db.commit()
+        return {
+            "success": True,
+            "message": "Timetable deleted successfully",
+        }
     except Exception as e:
         db.rollback()
         return {

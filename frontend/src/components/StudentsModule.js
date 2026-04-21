@@ -58,15 +58,39 @@ function StudentsModule() {
   const addStudent = async () => {
   try {
     const payload = {
-      name: form.first_name + " " + form.last_name,
-      email: form.email,
-      roll_number: form.enrollment_no,
-      class: form.section || "CSE"
+      ...form,
+      first_name: form.first_name.trim(),
+      last_name: form.last_name.trim(),
+      enrollment_no: form.enrollment_no.trim(),
+      roll_no: form.roll_no.trim(),
+      email: form.email.trim(),
+      mobile: form.mobile.trim(),
+      department: form.department.trim(),
+      course: form.course.trim(),
+      semester: form.semester.trim(),
+      section: form.section.trim(),
+      scholar_type: form.scholar_type.trim(),
+      password: form.password.trim() || "123456"
     };
 
     await api.post("/students/add", payload);
 
     alert("Student Added Successfully");
+
+    setForm({
+      first_name: "",
+      last_name: "",
+      enrollment_no: "",
+      roll_no: "",
+      email: "",
+      mobile: "",
+      department: "",
+      course: "",
+      semester: "",
+      section: "",
+      scholar_type: "",
+      password: ""
+    });
 
     loadStudents();
 
@@ -151,6 +175,7 @@ function StudentsModule() {
 
             <input
               placeholder="First Name"
+              value={form.first_name}
               onChange={(e)=>
                 change(
                   "first_name",
@@ -161,6 +186,7 @@ function StudentsModule() {
 
             <input
               placeholder="Last Name"
+              value={form.last_name}
               onChange={(e)=>
                 change(
                   "last_name",
@@ -171,6 +197,7 @@ function StudentsModule() {
 
             <input
               placeholder="Enrollment No"
+              value={form.enrollment_no}
               onChange={(e)=>
                 change(
                   "enrollment_no",
@@ -181,6 +208,7 @@ function StudentsModule() {
 
             <input
               placeholder="Roll No"
+              value={form.roll_no}
               onChange={(e)=>
                 change(
                   "roll_no",
@@ -191,6 +219,7 @@ function StudentsModule() {
 
             <input
               placeholder="Email"
+              value={form.email}
               onChange={(e)=>
                 change(
                   "email",
@@ -201,6 +230,7 @@ function StudentsModule() {
 
             <input
               placeholder="Mobile"
+              value={form.mobile}
               onChange={(e)=>
                 change(
                   "mobile",
@@ -211,6 +241,7 @@ function StudentsModule() {
 
             <input
               placeholder="Department"
+              value={form.department}
               onChange={(e)=>
                 change(
                   "department",
@@ -221,6 +252,7 @@ function StudentsModule() {
 
             <input
               placeholder="Course"
+              value={form.course}
               onChange={(e)=>
                 change(
                   "course",
@@ -231,6 +263,7 @@ function StudentsModule() {
 
             <input
               placeholder="Semester"
+              value={form.semester}
               onChange={(e)=>
                 change(
                   "semester",
@@ -241,6 +274,7 @@ function StudentsModule() {
 
             <input
               placeholder="Section"
+              value={form.section}
               onChange={(e)=>
                 change(
                   "section",
@@ -251,6 +285,7 @@ function StudentsModule() {
 
             <input
               placeholder="Hosteller / Day Scholar"
+              value={form.scholar_type}
               onChange={(e)=>
                 change(
                   "scholar_type",
@@ -262,6 +297,7 @@ function StudentsModule() {
             <input
               placeholder="Password"
               type="password"
+              value={form.password}
               onChange={(e)=>
                 change(
                   "password",

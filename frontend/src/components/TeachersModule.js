@@ -10,7 +10,10 @@ function TeachersModule() {
   const [form, setForm] = useState({
     name: "",
     email: "",
-    department: ""
+    department: "",
+    mobile: "",
+    qualification: "",
+    password: ""
   });
 
   // Load Teachers
@@ -51,7 +54,10 @@ function TeachersModule() {
       await api.post("/teachers/add", {
         name: form.name,
         email: form.email,
-        subject: form.department || "General"
+        department: form.department || "General",
+        mobile: form.mobile,
+        qualification: form.qualification,
+        password: form.password || "123456"
       });
 
       alert("Teacher Added Successfully");
@@ -59,7 +65,10 @@ function TeachersModule() {
       setForm({
         name: "",
         email: "",
-        department: ""
+        department: "",
+        mobile: "",
+        qualification: "",
+        password: ""
       });
 
       loadTeachers();
@@ -131,6 +140,31 @@ function TeachersModule() {
               }
             />
 
+            <input
+              placeholder="Mobile"
+              value={form.mobile}
+              onChange={(e) =>
+                change("mobile", e.target.value)
+              }
+            />
+
+            <input
+              placeholder="Qualification"
+              value={form.qualification}
+              onChange={(e) =>
+                change("qualification", e.target.value)
+              }
+            />
+
+            <input
+              placeholder="Password"
+              type="password"
+              value={form.password}
+              onChange={(e) =>
+                change("password", e.target.value)
+              }
+            />
+
           </div>
 
           <button
@@ -158,7 +192,7 @@ function TeachersModule() {
                   [
                     ...new Set(
                       teachers.map(
-                        (t) => t.subject
+                        (t) => t.department
                       )
                     )
                   ].length
@@ -215,7 +249,7 @@ function TeachersModule() {
 
                 <td>{t.email}</td>
 
-                <td>{t.subject}</td>
+                <td>{t.department}</td>
 
                 <td>
                   <span className="badge-green">

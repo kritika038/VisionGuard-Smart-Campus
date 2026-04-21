@@ -76,3 +76,118 @@ CREATE TABLE IF NOT EXISTS qr_tokens (
   expires_at DATETIME NOT NULL,
   is_active TINYINT(1) NOT NULL DEFAULT 1
 );
+
+INSERT INTO teachers (
+  name,
+  employee_id,
+  department,
+  email,
+  mobile,
+  qualification,
+  password
+)
+VALUES (
+  'Teacher Demo',
+  'TCH-001',
+  'Computer Science',
+  'teacher@visionguard.com',
+  '9876543210',
+  'M.Tech',
+  '123456'
+)
+ON DUPLICATE KEY UPDATE
+  name = VALUES(name),
+  department = VALUES(department),
+  mobile = VALUES(mobile),
+  qualification = VALUES(qualification),
+  password = VALUES(password);
+
+INSERT INTO students (
+  first_name,
+  last_name,
+  enrollment_no,
+  roll_no,
+  email,
+  mobile,
+  department,
+  course,
+  semester,
+  section,
+  scholar_type,
+  password
+)
+VALUES (
+  'Kritika',
+  'Bansal',
+  'ENR-001',
+  '01',
+  'kritikabansal3@gmail.com',
+  '9876543210',
+  'Computer Science',
+  'B.Tech',
+  '6',
+  'A',
+  'Day Scholar',
+  '123456'
+)
+ON DUPLICATE KEY UPDATE
+  first_name = VALUES(first_name),
+  last_name = VALUES(last_name),
+  mobile = VALUES(mobile),
+  department = VALUES(department),
+  course = VALUES(course),
+  semester = VALUES(semester),
+  section = VALUES(section),
+  scholar_type = VALUES(scholar_type),
+  password = VALUES(password);
+
+INSERT INTO subjects (
+  subject_name,
+  subject_code,
+  semester,
+  department,
+  teacher_name,
+  credits
+)
+VALUES (
+  'AI Fundamentals',
+  'CSE101',
+  '6',
+  'Computer Science',
+  'Teacher Demo',
+  '4'
+)
+ON DUPLICATE KEY UPDATE
+  semester = VALUES(semester),
+  department = VALUES(department),
+  teacher_name = VALUES(teacher_name),
+  credits = VALUES(credits);
+
+INSERT INTO timetable (
+  day_name,
+  start_time,
+  end_time,
+  subject_name,
+  teacher_name,
+  room_no,
+  semester,
+  section
+)
+SELECT
+  'Monday',
+  '10:00',
+  '11:00',
+  'AI Fundamentals',
+  'Teacher Demo',
+  'Lab-1',
+  '6',
+  'A'
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM timetable
+  WHERE day_name = 'Monday'
+    AND start_time = '10:00'
+    AND subject_name = 'AI Fundamentals'
+    AND teacher_name = 'Teacher Demo'
+    AND section = 'A'
+);

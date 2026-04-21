@@ -113,6 +113,7 @@ def real_face_scan(data: FaceData):
         if old:
             return {
                 "success": True,
+                "student": full_name,
                 "message": f"{full_name} already marked"
             }
 
@@ -138,6 +139,7 @@ def real_face_scan(data: FaceData):
 
         return {
             "success": True,
+            "student": full_name,
             "message": f"{full_name} marked present"
         }
 
@@ -217,7 +219,8 @@ def multi_face_scan(data: FaceData):
         return {
             "success": True,
             "count": len(names),
-            "students": names
+            "students": names,
+            "message": f"{len(names)} students marked present",
         }
 
     except Exception as e:

@@ -223,19 +223,6 @@ function TeacherDashboard() {
       selectedClass
     ]);
 
-  // -----------------------------
-  // MANUAL MARK
-  // -----------------------------
-  const mark = (
-    id,
-    status
-  ) => {
-    setAttendanceMap((prev) => ({
-      ...prev,
-      [id]: status
-    }));
-  };
-
   const saveAttendance =
     async () => {
       try {
