@@ -15,21 +15,37 @@ function Login() {
 
     try {
       const res = await api.post("/auth/login", {
-        email,
-        password,
+        email: email.trim(),
+        password: password.trim(),
       });
+
+      console.log("LOGIN RESPONSE:", res.data);
 
       localStorage.setItem("user", JSON.stringify(res.data));
 
-      if (res.data.role === "admin") {
+      const role =
+        res.data.role ||
+        res.data.user?.role ||
+        res.data.data?.role ||
+        "admin";
+
+      if (role === "admin") {
         window.location.href = "/admin";
-      } else if (res.data.role === "teacher") {
+      } else if (role === "teacher") {
         window.location.href = "/teacher";
       } else {
         window.location.href = "/student";
       }
+
     } catch (err) {
-      setError("Invalid Email or Password");
+      console.log("LOGIN ERROR:", err.response?.data || err.message);
+
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.detail ||
+        "Invalid Email or Password";
+
+      setError(msg);
     } finally {
       setLoading(false);
     }
