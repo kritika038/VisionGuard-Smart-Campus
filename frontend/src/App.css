@@ -43,20 +43,25 @@ body{
 }
 
 .brand-box{
-  margin-bottom:28px;
+  margin-bottom:22px;
   padding:10px 8px;
   max-width:100%;
 }
 
+/* ONLY replace .brand-box h2 */
+
 .brand-box h2{
   margin:0;
-  font-size:25px;
-  font-weight:800;
-  line-height:1;
-  letter-spacing:-0.5px;
+  font-size:22px;
+  font-weight:900;
+  line-height:1.1;
+  letter-spacing:-0.3px;
   white-space:nowrap;
-  overflow:visible;
-  text-overflow:unset;
+}
+
+/* optional spacing under logo */
+.brand-box{
+  margin-bottom:22px;
 }
 
 .brand-box span,
