@@ -203,7 +203,7 @@ Backend runs at: `http://localhost:8000`
 
 ## 👩💻 Developed By
 
-**Kritika Bansal**
+**Kritika**
 
 <div align="center">
 ⭐ If you found this project valuable, consider starring the repository.
