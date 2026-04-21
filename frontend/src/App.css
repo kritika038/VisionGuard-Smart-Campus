@@ -32,8 +32,8 @@ body{
 /* ONLY replace these existing sections in your App.css */
 
 .sidebar{
-  width:340px;
-  min-width:340px;
+  width:330px;
+  min-width:350px;
   padding:24px 18px;
   background:rgba(10,15,40,.88);
   backdrop-filter:blur(14px);
@@ -50,8 +50,8 @@ body{
 
 .brand-box h2{
   margin:0;
-  font-size:28px;
-  font-weight:900;
+  font-size:25px;
+  font-weight:800;
   line-height:1;
   letter-spacing:-0.5px;
   white-space:nowrap;
