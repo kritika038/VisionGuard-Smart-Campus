@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.core.db import bootstrap_database, ping_database
+
 from app.routes import auth
 from app.routes import student
 from app.routes import teacher
@@ -20,21 +21,29 @@ async def lifespan(_: FastAPI):
     bootstrap_database()
     yield
 
+
 app = FastAPI(
     title="VisionGuard Backend",
     version="1.0.0",
     lifespan=lifespan,
 )
 
+# CORS FIXED FOR LOCAL + VERCEL
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_origin_regex=settings.cors_origin_regex,
-    allow_credentials=False,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://frontend-6ova8qi5g-kritikas-projects-85137cfb.vercel.app",
+        "https://frontend-git-main-kritikas-projects-85137cfb.vercel.app",
+    ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# ROUTES
 app.include_router(auth.router)
 app.include_router(auth.plain_router)
 app.include_router(student.router)
@@ -45,6 +54,7 @@ app.include_router(attendance.router)
 app.include_router(qr_attendance.router)
 
 
+# ROOT
 @app.get("/")
 def root():
     return {
@@ -54,6 +64,7 @@ def root():
     }
 
 
+# HEALTH
 @app.get("/health")
 def health():
     return {
