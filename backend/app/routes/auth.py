@@ -1,3 +1,5 @@
+# backend/app/routes/auth.py
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 
@@ -9,11 +11,7 @@ router = APIRouter(
 
 class LoginData(BaseModel):
     email: EmailStr
-    password: str = Field(
-        ...,
-        min_length=1,
-        max_length=128
-    )
+    password: str = Field(..., min_length=1, max_length=128)
 
 
 @router.post("/login")
@@ -35,7 +33,7 @@ def login(data: LoginData):
         return {
             "success": True,
             "role": "teacher",
-            "name": "Demo Teacher",
+            "name": "Rahul Sharma",
             "id": 2
         }
 
@@ -63,12 +61,12 @@ def plain_login(data: LoginData):
 
 
 @plain_router.post("/login/")
-def plain_login_with_slash(data: LoginData):
+def plain_login_slash(data: LoginData):
     return login(data)
 
 
 @router.post("/login/")
-def login_with_slash(data: LoginData):
+def login_slash(data: LoginData):
     return login(data)
 
 
