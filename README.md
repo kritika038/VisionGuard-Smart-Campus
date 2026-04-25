@@ -5,12 +5,14 @@
 ### AI-Powered Attendance Management Platform for Modern Institutions
 
 <p>
-  <a href="https://frontend-one-blush-51.vercel.app/">
+  <a href="https://vision-guard-smart-campus-gelywtdlv-kritikas-projects-85137cfb.vercel.app/">
     <img src="https://img.shields.io/badge/Live%20Demo-Frontend-black?style=for-the-badge&logo=vercel" />
   </a>
+
   <a href="https://visionguard-smart-campus-production.up.railway.app/">
     <img src="https://img.shields.io/badge/Backend-API-green?style=for-the-badge&logo=fastapi" />
   </a>
+
   <a href="https://visionguard-smart-campus-production.up.railway.app/docs">
     <img src="https://img.shields.io/badge/API-Docs-orange?style=for-the-badge&logo=swagger" />
   </a>
