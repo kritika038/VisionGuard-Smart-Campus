@@ -21,13 +21,8 @@ def login(data: LoginData):
     email = data.email.strip().lower()
     password = data.password.strip()
 
-    # ---------------------------------
-    # ADMIN LOGIN
-    # ---------------------------------
-    if (
-        email == "admin@visionguard.com"
-        and password == "admin123"
-    ):
+    # ADMIN
+    if email == "admin@visionguard.com" and password == "admin123":
         return {
             "success": True,
             "role": "admin",
@@ -35,13 +30,8 @@ def login(data: LoginData):
             "id": 1
         }
 
-    # ---------------------------------
-    # TEACHER LOGIN
-    # ---------------------------------
-    if (
-        email == "teacher@visionguard.com"
-        and password == "123456"
-    ):
+    # TEACHER
+    if email == "teacher@visionguard.com" and password == "123456":
         return {
             "success": True,
             "role": "teacher",
@@ -49,13 +39,8 @@ def login(data: LoginData):
             "id": 2
         }
 
-    # ---------------------------------
-    # STUDENT LOGIN
-    # ---------------------------------
-    if (
-        email == "kritikabansal3@gmail.com"
-        and password == "123456"
-    ):
+    # STUDENT
+    if email == "kritikabansal3@gmail.com" and password == "123456":
         return {
             "success": True,
             "role": "student",
