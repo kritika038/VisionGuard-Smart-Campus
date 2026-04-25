@@ -1,3 +1,5 @@
+# backend/app/core/db.py
+
 from urllib.parse import quote_plus
 
 import mysql.connector
@@ -74,10 +76,13 @@ def get_mysql_connection(database=None):
         "password": settings.db_password,
         "connection_timeout": 10,
     }
+
     if database is None:
         database = settings.db_name
+
     if database:
         kwargs["database"] = database
+
     return mysql.connector.connect(**kwargs)
 
 
@@ -87,20 +92,76 @@ def _split_sql_script(script: str):
 
     for line in script.splitlines():
         stripped = line.strip()
+
         if not stripped or stripped.startswith("--"):
             continue
 
         current.append(line)
+
         if stripped.endswith(";"):
             statement = "\n".join(current).strip()
+
             if statement:
                 statements.append(statement.rstrip(";"))
+
             current = []
 
     trailing = "\n".join(current).strip()
+
     if trailing:
         statements.append(trailing.rstrip(";"))
+
     return statements
+
+
+# ---------------------------------------
+# PERMANENT DEMO USERS
+# ---------------------------------------
+def seed_demo_users():
+    db = get_mysql_connection()
+    cur = db.cursor()
+
+    try:
+        # Teacher Demo User
+        cur.execute(
+            """
+            INSERT INTO teachers (name, email, password)
+            SELECT %s, %s, %s
+            WHERE NOT EXISTS (
+                SELECT 1 FROM teachers WHERE email=%s
+            )
+            """,
+            (
+                "Demo Teacher",
+                "teacher@visionguard.com",
+                "123456",
+                "teacher@visionguard.com",
+            ),
+        )
+
+        # Student Demo User
+        cur.execute(
+            """
+            INSERT INTO students (first_name, last_name, email, password)
+            SELECT %s, %s, %s, %s
+            WHERE NOT EXISTS (
+                SELECT 1 FROM students WHERE email=%s
+            )
+            """,
+            (
+                "Kritika",
+                "Bansal",
+                "kritikabansal3@gmail.com",
+                "123456",
+                "kritikabansal3@gmail.com",
+            ),
+        )
+
+        db.commit()
+
+    finally:
+        cur.close()
+        db.close()
 
 
 def bootstrap_database():
@@ -109,30 +170,52 @@ def bootstrap_database():
 
     admin_db = get_mysql_connection(database=None)
     admin_cursor = admin_db.cursor()
+
     try:
         database_name = _database_name_for_sql(settings.db_name)
-        admin_cursor.execute(f"CREATE DATABASE IF NOT EXISTS `{database_name}`")
-        admin_cursor.execute(f"USE `{database_name}`")
 
-        script = settings.schema_path.read_text(encoding="utf-8")
+        admin_cursor.execute(
+            f"CREATE DATABASE IF NOT EXISTS `{database_name}`"
+        )
+
+        admin_cursor.execute(
+            f"USE `{database_name}`"
+        )
+
+        script = settings.schema_path.read_text(
+            encoding="utf-8"
+        )
+
         for statement in _split_sql_script(script):
             normalized = statement.strip().lower()
-            if normalized.startswith("create database") or normalized.startswith("use "):
+
+            if (
+                normalized.startswith("create database")
+                or normalized.startswith("use ")
+            ):
                 continue
+
             admin_cursor.execute(statement)
+
         admin_db.commit()
+
     finally:
         admin_cursor.close()
         admin_db.close()
+
+    # ALWAYS KEEP DEMO USERS
+    seed_demo_users()
 
 
 def ping_database():
     db = get_mysql_connection()
     cur = db.cursor()
+
     try:
         cur.execute("SELECT 1")
         cur.fetchone()
         return True
+
     finally:
         cur.close()
         db.close()
