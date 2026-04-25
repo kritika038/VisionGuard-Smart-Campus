@@ -1,13 +1,10 @@
 import axios from "axios";
 
-const configuredBaseUrl =
-  process.env.REACT_APP_API_URL?.trim();
-
-const API = axios.create({
+const api = axios.create({
   baseURL:
-    configuredBaseUrl ||
-    "http://127.0.0.1:8000",
+    process.env.REACT_APP_API_URL ||
+    "https://visionguard-smart-campus-production.up.railway.app",
   timeout: 15000,
 });
 
-export default API;
+export default api;
