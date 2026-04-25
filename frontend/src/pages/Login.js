@@ -10,42 +10,41 @@ function Login() {
 
   const login = async (e) => {
     e.preventDefault();
+
+    if (loading) return;
+
     setLoading(true);
     setError("");
 
     try {
       const res = await api.post("/auth/login", {
-        email: email.trim(),
+        email: email.trim().toLowerCase(),
         password: password.trim(),
       });
 
-      console.log("LOGIN RESPONSE:", res.data);
+      const user = res.data;
 
-      localStorage.setItem("user", JSON.stringify(res.data));
+      localStorage.setItem("user", JSON.stringify(user));
 
-      const role =
-        res.data.role ||
-        res.data.user?.role ||
-        res.data.data?.role ||
-        "admin";
-
-      if (role === "admin") {
-        window.location.href = "/admin";
-      } else if (role === "teacher") {
-        window.location.href = "/teacher";
+      if (user.role === "admin") {
+        window.location.replace("/admin");
+      } else if (user.role === "teacher") {
+        window.location.replace("/teacher");
+      } else if (user.role === "student") {
+        window.location.replace("/student");
       } else {
-        window.location.href = "/student";
+        setError("Invalid user role.");
       }
 
     } catch (err) {
       console.log("LOGIN ERROR:", err.response?.data || err.message);
 
-      const msg =
-        err.response?.data?.message ||
-        err.response?.data?.detail ||
-        "Invalid Email or Password";
+      if (err.response?.status === 401) {
+        setError("Invalid Email or Password");
+      } else {
+        setError("Server connection issue. Please try again.");
+      }
 
-      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -53,6 +52,7 @@ function Login() {
 
   return (
     <div className="login-page">
+
       <div className="login-left">
         <div className="login-brand">
           <h1>VisionGuard</h1>
@@ -70,6 +70,7 @@ function Login() {
 
       <div className="login-right">
         <form className="login-card" onSubmit={login}>
+
           <h2>Welcome Back</h2>
           <p>Login to continue</p>
 
@@ -91,8 +92,8 @@ function Login() {
 
           {error && <div className="error-box">{error}</div>}
 
-          <button type="submit">
-            {loading ? "Please Wait..." : "Login"}
+          <button type="submit" disabled={loading}>
+            {loading ? "Logging In..." : "Login"}
           </button>
 
           <div className="demo-box">
@@ -114,8 +115,10 @@ function Login() {
             <p>Email: kritikabansal3@gmail.com</p>
             <p>Password: 123456</p>
           </div>
+
         </form>
       </div>
+
     </div>
   );
 }
