@@ -36,7 +36,7 @@
 |--------|------|
 | 🖥️ Frontend | https://vision-guard-smart-campus-gelywtdlv-kritikas-projects-85137cfb.vercel.app/|
 | ⚙️ Backend API | https://visionguard-smart-campus-production.up.railway.app/ |
-| 📘 Swagger Docs | https://visionguard-smart-campus-production.up.railway.app/docs |
+| 📘 API Docs | https://visionguard-smart-campus-production.up.railway.app/docs |
 
 ---
 
