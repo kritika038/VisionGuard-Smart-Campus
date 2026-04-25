@@ -1,8 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr, Field
 
-from app.core.db import get_mysql_connection
-
 router = APIRouter(
     prefix="/auth",
     tags=["Auth"],
@@ -34,72 +32,41 @@ def login(data: LoginData):
             "success": True,
             "role": "admin",
             "name": "Administrator",
-            "id": 999
+            "id": 1
         }
 
     # ---------------------------------
-    # FIXED DEMO TEACHER LOGIN
+    # TEACHER LOGIN
     # ---------------------------------
-    db = get_mysql_connection()
-    cur = db.cursor(dictionary=True)
+    if (
+        email == "teacher@visionguard.com"
+        and password == "123456"
+    ):
+        return {
+            "success": True,
+            "role": "teacher",
+            "name": "Demo Teacher",
+            "id": 2
+        }
 
-    try:
-        # Teacher Login
-        cur.execute(
-            """
-            SELECT *
-            FROM teachers
-            WHERE LOWER(email)=%s
-            AND password=%s
-            """,
-            (
-                email,
-                password
-            ),
-        )
+    # ---------------------------------
+    # STUDENT LOGIN
+    # ---------------------------------
+    if (
+        email == "kritikabansal3@gmail.com"
+        and password == "123456"
+    ):
+        return {
+            "success": True,
+            "role": "student",
+            "name": "Kritika Bansal",
+            "id": 3
+        }
 
-        teacher = cur.fetchone()
-
-        if teacher:
-            return {
-                "success": True,
-                "role": "teacher",
-                "name": teacher["name"],
-                "id": teacher["id"],
-            }
-
-        # Student Login
-        cur.execute(
-            """
-            SELECT *
-            FROM students
-            WHERE LOWER(email)=%s
-            AND password=%s
-            """,
-            (
-                email,
-                password
-            ),
-        )
-
-        student = cur.fetchone()
-
-        if student:
-            return {
-                "success": True,
-                "role": "student",
-                "name": f'{student["first_name"]} {student["last_name"]}'.strip(),
-                "id": student["id"],
-            }
-
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid Email or Password"
-        )
-
-    finally:
-        cur.close()
-        db.close()
+    raise HTTPException(
+        status_code=401,
+        detail="Invalid Email or Password"
+    )
 
 
 plain_router = APIRouter(tags=["Auth"])
