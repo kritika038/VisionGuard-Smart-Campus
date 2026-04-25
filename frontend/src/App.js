@@ -158,6 +158,7 @@ import {
 import "./App.css";
 
 import Login from "./pages/Login";
+import { apiBaseURL } from "./api";
 import AdminDashboard from "./pages/AdminDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
@@ -212,7 +213,7 @@ function App() {
     const wakeServer = async () => {
       try {
         await fetch(
-          "https://visionguard-smart-campus-production.up.railway.app/health",
+          `${apiBaseURL}/health`,
           { method: "GET" }
         );
         console.log("Backend Ready");
